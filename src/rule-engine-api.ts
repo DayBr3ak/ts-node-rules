@@ -29,18 +29,13 @@ export class Api<T> {
     }
   }
 
-  private controlCalled: boolean = false
   constructor(private context: ApiContext<T>, private x: number) {}
 
-  public restart(nextState: T = this.context.session): Promise<T> {
-    this.context.session = nextState
-    this.controlCalled = true
+  public restart(): Promise<T> {
     return Api.FnRuleLoop(0, this.context)
   }
 
-  public stop(nextState: T = this.context.session): Promise<T> {
-    this.context.session = nextState
-    this.controlCalled = true
+  public stop(): Promise<T> {
     this.context.complete = true
     return Api.FnRuleLoop(0, this.context)
   }
@@ -73,17 +68,12 @@ export class Api<T> {
       const ruleRef = rule.id || 'index_' + x
       await nextTick()
       this.context.matchPath.push(ruleRef)
-      this.controlCalled = false
       const res = await consequence(
         this,
         this.context.session,
         this.context.deps
       )
-      if (this.controlCalled) {
-        // restart or stop, the loop stops here
-        return res
-      }
-      return this.next(res)
+      return res
     } else {
       await nextTick()
       return this.next()

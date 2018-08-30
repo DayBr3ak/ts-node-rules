@@ -29,29 +29,22 @@ export class Api<T> {
     }
   }
 
+  public readonly NEXT = '@next'
+  public readonly STOP = '@next'
+  public readonly RESTART = '@next'
+
   constructor(private context: ApiContext<T>, private x: number) {}
 
-  public restart(): Promise<T> {
+  private restart(): Promise<T> {
     return Api.FnRuleLoop(0, this.context)
   }
 
-  public stop(): Promise<T> {
+  private stop(): Promise<T> {
     this.context.complete = true
     return Api.FnRuleLoop(0, this.context)
   }
 
-  /**
-   * Use when as a return value
-   *
-   * ### Example
-   * ```js
-   * return R.when(someCondition === true);
-   * ```
-   * @param outcome the condition for the rule to be ran
-   * @returns       a Promise used internally by the engine
-   */
-  private async next(nextState: T = this.context.session): Promise<T> {
-    this.context.session = nextState
+  private async next(): Promise<T> {
     await nextTick()
     return Api.FnRuleLoop(this.x + 1, this.context)
   }
@@ -73,7 +66,14 @@ export class Api<T> {
         this.context.session,
         this.context.deps
       )
-      return res
+      switch (res) {
+        case this.STOP:
+          return this.stop()
+        case this.RESTART:
+          return this.restart()
+        default:
+          return this.next()
+      }
     } else {
       await nextTick()
       return this.next()

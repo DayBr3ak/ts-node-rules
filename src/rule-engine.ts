@@ -8,7 +8,7 @@ export type RuleEngineCallback<T, R> = (
 ) => Promise<R> | R
 
 export interface RuleEngineRule<T> {
-  readonly priority: number
+  priority?: number
   on?: boolean
   id?: string
   consequence: RuleEngineCallback<T, any>
@@ -58,7 +58,7 @@ export class RuleEngine<T> {
 
   public sync(): RuleEngine<T> {
     const prioritySorter = (a: RuleEngineRule<T>, b: RuleEngineRule<T>) =>
-      b.priority - a.priority
+      b.priority! - a.priority!
     const ruleFilter = (a: RuleEngineRule<T>) => a.on
     this.activeRules = this.rules.filter(ruleFilter)
     this.activeRules.sort(prioritySorter)
